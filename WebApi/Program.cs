@@ -1,8 +1,11 @@
-﻿using Application.DependencyInjection;
+﻿using Application.Abstractions;
+using Application.DependencyInjection;
 using Infrastructure.DependencyInjection;
 using Serilog;
 using System.Reflection;
+using WebApi.Hubs;
 using WebApi.Middleware;
+using WebApi.Services;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -47,6 +50,7 @@ try
 
     builder.Services.AddApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);
+    builder.Services.AddIntegrationServices(builder.Configuration);
     builder.Services.AddDistributedMemoryCache();
     #region Redis Info
     // Production için (Redis'e geçmek istersen):
@@ -59,6 +63,9 @@ try
     //    });
     // 4. appsettings.json'a "RedisConnection": "localhost:6379" gibi bir connection string ekle.
     #endregion
+    builder.Services.AddSignalR();
+    builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
+
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
@@ -101,6 +108,7 @@ try
     app.UseAuthorization();
     app.UseSerilogRequestLogging();
     app.MapControllers();
+    app.MapHub<NotificationHub>("/notification-hub");
 
     app.Run();
 }

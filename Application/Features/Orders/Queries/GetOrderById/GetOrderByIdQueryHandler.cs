@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using Application.Features.Orders.Queries.Shared.DTOs;
+using AutoMapper;
 using Domain.Repositories;
 using MediatR;
 

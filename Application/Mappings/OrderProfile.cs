@@ -1,5 +1,4 @@
-﻿using Application.Features.Orders.Commands.CreateOrder;
-using Application.Features.Orders.Queries.GetOrderById;
+﻿using Application.Features.Orders.Queries.Shared.DTOs;
 using AutoMapper;
 using Domain.Entities;
 

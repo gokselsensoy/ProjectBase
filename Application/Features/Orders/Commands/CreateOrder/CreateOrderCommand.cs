@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Application.Features.Orders.Queries.Shared.DTOs;
 
 namespace Application.Features.Orders.Commands.CreateOrder
 {
@@ -9,12 +10,5 @@ namespace Application.Features.Orders.Commands.CreateOrder
         public string City { get; set; }
         public string ZipCode { get; set; }
         public List<OrderItemDto> OrderItems { get; set; } = new();
-    }
-
-    public class OrderItemDto
-    {
-        public Guid ProductId { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
     }
 }

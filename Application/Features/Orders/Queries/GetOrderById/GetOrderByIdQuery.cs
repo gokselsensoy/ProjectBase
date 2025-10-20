@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions;
+using Application.Features.Orders.Queries.Shared.DTOs;
 using MediatR;
 
 namespace Application.Features.Orders.Queries.GetOrderById
