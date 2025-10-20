@@ -121,6 +121,13 @@ try
     app.UseSerilogRequestLogging();
     app.MapControllers();
     app.MapHub<NotificationHub>("/notification-hub");
+    // Hangfire Dashboard'u /hangfire adresinde aktif et
+    // TODO: Production'da buraya bir yetkilendirme filtresi eklenmelidir!
+    // Örn: app.MapHangfireDashboard("/hangfire", new DashboardOptions
+    // {
+    //    Authorization = new [] { new MyHangfireAuthorizationFilter() }
+    // });
+    app.MapHangfireDashboard("/hangfire");
 
     app.Run();
 }

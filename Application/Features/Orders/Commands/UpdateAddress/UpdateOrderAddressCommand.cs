@@ -8,8 +8,5 @@ namespace Application.Features.Orders.Commands.UpdateAddress
         public string Street { get; set; }
         public string City { get; set; }
         public string ZipCode { get; set; }
-
-        // TODO: Burası için de bir Validator sınıfı oluşturulmalı
-        // (UpdateOrderAddressCommandValidator.cs)
     }
 }

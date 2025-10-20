@@ -1,6 +1,6 @@
 ﻿namespace Domain.Exceptions
 {
-    public class OrderDomainException : Exception
+    public class OrderDomainException : DomainException
     {
         public OrderDomainException() { }
         public OrderDomainException(string message) : base(message) { }
