@@ -1,6 +1,9 @@
 ﻿using Application.Abstractions;
 using Application.DependencyInjection;
 using Infrastructure.DependencyInjection;
+using Integration.DependencyInjection;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Serilog;
 using System.Reflection;
 using WebApi.Hubs;
@@ -47,6 +50,15 @@ try
         .Enrich.FromLogContext() // Log Context'ten gelen bilgileri ekle
         .WriteTo.Console()); // Konsola yaz (appsettings'de de olabilir)
                              // .WriteTo.File(...) // Dosyaya yaz (appsettings'de de olabilir)
+
+    // --- HANGFIRE KAYITLARI ---
+    builder.Services.AddHangfire(config => config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")))
+    );
+    builder.Services.AddHangfireServer();
 
     builder.Services.AddApplicationServices();
     builder.Services.AddInfrastructureServices(builder.Configuration);

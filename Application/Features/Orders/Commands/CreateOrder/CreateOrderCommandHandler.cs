@@ -1,8 +1,10 @@
-﻿using AutoMapper;
+﻿using Application.Abstractions;
+using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;
 using Domain.SeedWork;
 using Domain.ValueObjects;
+using Hangfire;
 using MediatR;
 
 namespace Application.Features.Orders.Commands.CreateOrder
@@ -11,15 +13,20 @@ namespace Application.Features.Orders.Commands.CreateOrder
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper; // (Opsiyonel, DTO -> Entity için)
+        private readonly IMapper _mapper;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public CreateOrderCommandHandler(IOrderRepository orderRepository, IUnitOfWork unitOfWork, IMapper mapper)
+        public CreateOrderCommandHandler(
+            IOrderRepository orderRepository,
+            IUnitOfWork unitOfWork,
+            IMapper mapper,
+            IBackgroundJobClient backgroundJobClient)
         {
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _backgroundJobClient = backgroundJobClient;
         }
-
         public async Task<Guid> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
         {
             // 1. Domain validasyonu için Value Object oluştur
@@ -37,10 +44,23 @@ namespace Application.Features.Orders.Commands.CreateOrder
             // 4. Repository ile veritabanına (in-memory) ekle
             _orderRepository.Add(newOrder);
 
-            // 5. UnitOfWork ile tüm değişiklikleri tek bir transaction'da kaydet
+            // 5. Fotoğraf varsa, işi sıraya al
+            if (!string.IsNullOrEmpty(request.PhotoBase64))
+            {
+                // Bu metot anında döner, DB'ye (aynı transaction içinde) işi kaydeder
+                _backgroundJobClient.Enqueue<IPhotoUploader>(
+                    uploader => uploader.UploadOrderPhotoAsync(
+                        newOrder.Id,
+                        request.PhotoBase64,
+                        newOrder.CustomerId
+                    )
+                );
+            }
+
+            // 6. UnitOfWork ile tüm değişiklikleri tek bir transaction'da kaydet
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // 6. Sonucu dön
+            // 7. Sonucu dön
             return newOrder.Id;
         }
     }

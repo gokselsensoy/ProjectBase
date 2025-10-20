@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions;
 using Integration.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Integration.DependencyInjection
