@@ -15,10 +15,4 @@ namespace Domain.SeedWork
         void Update(T entity);
         void Delete(T entity);
     }
-
-    // IUnitOfWork arayüzü
-    public interface IUnitOfWork
-    {
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-    }
 }

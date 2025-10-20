@@ -1,5 +1,5 @@
 ﻿using Application.Features.Orders.Commands.CreateOrder;
-using Application.Features.Orders.Queries;
+using Application.Features.Orders.Queries.GetOrderById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

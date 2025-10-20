@@ -1,7 +1,7 @@
 ﻿using Application.Abstractions;
 using MediatR;
 
-namespace Application.Features.Orders.Queries
+namespace Application.Features.Orders.Queries.GetOrderById
 {
     public class GetOrderByIdQuery : ICachableQuery<OrderDto>
     {

@@ -1,6 +1,6 @@
 ﻿using Application.Features.Orders.Commands.CreateOrder;
 
-namespace Application.Features.Orders.Queries
+namespace Application.Features.Orders.Queries.GetOrderById
 {
     public class OrderDto
     {

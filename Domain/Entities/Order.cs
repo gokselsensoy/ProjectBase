@@ -36,13 +36,11 @@ namespace Domain.Entities
                 CreatedDate = DateTime.UtcNow
             };
 
-            // Sipariş yaratıldığında bir event fırlat (belki email atılır?)
             order.AddDomainEvent(new OrderCreatedDomainEvent(order.Id, order.CustomerId));
 
             return order;
         }
 
-        // Bu, Aggregate'in içindeki bir başka domain kuralı
         public void AddOrderItem(Guid productId, int quantity, decimal price)
         {
             if (quantity <= 0)
@@ -57,6 +55,8 @@ namespace Domain.Entities
             {
                 _orderItems.Add(new OrderItem(Id, productId, quantity, price));
             }
+
+            this.AddDomainEvent(new OrderUpdatedDomainEvent(this.Id, this.CustomerId));
         }
 
         public void SetAsShipped()
@@ -65,6 +65,21 @@ namespace Domain.Entities
                 throw new OrderDomainException("Sadece bekleyen siparişler kargolanabilir.");
 
             Status = OrderStatus.Shipped;
+
+            this.AddDomainEvent(new OrderUpdatedDomainEvent(this.Id, this.CustomerId));
+        }
+
+        public void UpdateShippingAddress(Address newShippingAddress)
+        {
+            if (newShippingAddress == null)
+                throw new OrderDomainException("Adres boş olamaz.");
+
+            if (Status != OrderStatus.Pending)
+                throw new OrderDomainException("Sadece bekleyen siparişlerin adresi değiştirilebilir.");
+
+            ShippingAddress = newShippingAddress;
+
+            this.AddDomainEvent(new OrderUpdatedDomainEvent(this.Id, this.CustomerId));
         }
     }
 }
