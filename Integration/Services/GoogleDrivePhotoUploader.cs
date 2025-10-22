@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Abstractions.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Integration.Services

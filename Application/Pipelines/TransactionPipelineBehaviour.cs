@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Abstractions.Messaging;
 using Domain.SeedWork;
 using MediatR;
 using Microsoft.Extensions.Logging;

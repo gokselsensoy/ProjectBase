@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Abstractions.Messaging;
 using Application.Features.Orders.Queries.Shared.DTOs;
 
 namespace Application.Features.Orders.Commands.CreateOrder

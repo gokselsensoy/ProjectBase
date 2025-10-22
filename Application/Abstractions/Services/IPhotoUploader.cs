@@ -1,4 +1,4 @@
-﻿namespace Application.Abstractions
+﻿namespace Application.Abstractions.Services
 {
     public interface IPhotoUploader
     {

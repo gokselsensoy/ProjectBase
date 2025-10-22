@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Abstractions.Services;
 using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
 

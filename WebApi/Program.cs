@@ -1,5 +1,4 @@
-﻿using Application.Abstractions;
-using Application.DependencyInjection;
+﻿using Application.DependencyInjection;
 using Infrastructure.DependencyInjection;
 using Integration.DependencyInjection;
 using Hangfire;
@@ -9,6 +8,7 @@ using System.Reflection;
 using WebApi.Hubs;
 using WebApi.Middleware;
 using WebApi.Services;
+using Application.Abstractions.Services;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

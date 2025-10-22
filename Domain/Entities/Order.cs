@@ -19,6 +19,7 @@ namespace Domain.Entities
         // Dışarıdan 'new Order()' yapılmasını engelliyoruz.
         private Order() { }
 
+
         // Factory Metodu: Bir Order yaratmanın tek yolu budur.
         // Bu metot, bir Order'ın yaratılması için GEREKLİ olan tüm
         // domain kurallarını uygular.

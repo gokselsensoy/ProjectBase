@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Application.Abstractions
+namespace Application.Abstractions.Messaging
 {
     public interface ICachableQuery<out TResponse> : IRequest<TResponse>
     {

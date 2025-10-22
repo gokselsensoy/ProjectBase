@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Abstractions.Services;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;
