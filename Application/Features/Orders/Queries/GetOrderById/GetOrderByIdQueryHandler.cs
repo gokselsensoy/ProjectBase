@@ -1,6 +1,6 @@
 ﻿using Application.Abstractions.EntityRepositories;
 using Application.Exceptions;
-using Application.Features.Orders.Queries.Shared.DTOs;
+using Application.Features.Orders.DTOs;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Repositories;

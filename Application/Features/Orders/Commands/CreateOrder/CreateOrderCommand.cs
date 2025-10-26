@@ -1,5 +1,5 @@
 ﻿using Application.Abstractions.Messaging;
-using Application.Features.Orders.Queries.Shared.DTOs;
+using Application.Features.Orders.DTOs;
 
 namespace Application.Features.Orders.Commands.CreateOrder
 {

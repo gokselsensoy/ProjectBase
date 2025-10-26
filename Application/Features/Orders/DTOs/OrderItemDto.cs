@@ -1,4 +1,4 @@
-﻿namespace Application.Features.Orders.Queries.Shared.DTOs
+﻿namespace Application.Features.Orders.DTOs
 {
     public class OrderItemDto
     {
