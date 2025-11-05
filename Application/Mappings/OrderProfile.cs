@@ -1,4 +1,4 @@
-﻿using Application.Features.Orders.Queries.Shared.DTOs;
+﻿using Application.Features.Orders.DTOs;
 using AutoMapper;
 using Domain.Entities;
 
