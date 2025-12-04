@@ -36,10 +36,10 @@ namespace Domain.SeedWork
         private Type GetRealType() => GetType(); // Proxy'lere karşı koruma (EF Core)
 
         // --- Domain Event (MediatR) Yönetimi ---
-        private readonly List<INotification> _domainEvents = new();
-        public IReadOnlyCollection<INotification> DomainEvents => _domainEvents.AsReadOnly();
+        private readonly List<IDomainEvent> _domainEvents = new();
+        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-        protected void AddDomainEvent(INotification eventItem)
+        protected void AddDomainEvent(IDomainEvent eventItem)
         {
             _domainEvents.Add(eventItem);
         }
