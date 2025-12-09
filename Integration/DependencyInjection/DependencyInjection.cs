@@ -11,6 +11,8 @@ namespace Integration.DependencyInjection
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             // GoogleDrive servisini (ve gelecekteki diğerlerini) kaydet
             services.AddTransient<IPhotoUploader, GoogleDrivePhotoUploader>();
 

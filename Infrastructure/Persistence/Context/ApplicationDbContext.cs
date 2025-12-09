@@ -3,6 +3,7 @@ using Domain.SeedWork;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Infrastructure.Persistence.Context
@@ -78,12 +79,31 @@ namespace Infrastructure.Persistence.Context
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //modelBuilder.HasPostgresExtension("postgis");
+
+            // Önce Assembly konfigürasyonlarını uygula
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+            // *** GLOBAL QUERY FILTER (SOFT DELETE) ***
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(ISoftDeletableEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    var parameter = Expression.Parameter(entityType.ClrType, "e");
+                    var propertyMethodInfo = typeof(EF).GetMethod("Property")?.MakeGenericMethod(typeof(bool));
+                    var isDeletedProperty = Expression.Call(propertyMethodInfo, parameter, Expression.Constant("IsDeleted"));
+
+                    // e => e.IsDeleted == false
+                    BinaryExpression compareExpression = Expression.MakeBinary(ExpressionType.Equal, isDeletedProperty, Expression.Constant(false));
+                    var lambda = Expression.Lambda(compareExpression, parameter);
+
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+                }
+            }
         }
 
         private async Task PublishDomainEventsAsync(CancellationToken cancellationToken)

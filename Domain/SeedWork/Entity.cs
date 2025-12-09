@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.SeedWork
 {
@@ -37,16 +38,35 @@ namespace Domain.SeedWork
 
         // --- Domain Event (MediatR) Yönetimi ---
         private readonly List<IDomainEvent> _domainEvents = new();
+
+        [NotMapped]
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-        protected void AddDomainEvent(IDomainEvent eventItem)
-        {
-            _domainEvents.Add(eventItem);
-        }
+        public void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
+        public void RemoveDomainEvent(IDomainEvent domainEvent) => _domainEvents.Remove(domainEvent);
+        public void ClearDomainEvents() => _domainEvents.Clear();
+    }
 
-        public void ClearDomainEvents()
+    public abstract class AuditableEntity : Entity, IAuditableEntity
+    {
+        public DateTime CreatedAt { get; set; }
+        public Guid? CreatedBy { get; set; }
+        public DateTime? LastModifiedAt { get; set; }
+        public Guid? LastModifiedBy { get; set; }
+    }
+
+    public abstract class FullAuditedEntity : AuditableEntity, ISoftDeletableEntity
+    {
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public Guid? DeletedBy { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        public void UndoDelete()
         {
-            _domainEvents.Clear();
+            IsDeleted = false;
+            DeletedAt = null;
+            DeletedBy = null;
         }
     }
 }
