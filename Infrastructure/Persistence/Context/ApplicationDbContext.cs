@@ -97,6 +97,7 @@ namespace Infrastructure.Persistence.Context
                     var propertyMethodInfo = typeof(EF).GetMethod("Property")?.MakeGenericMethod(typeof(bool));
                     var isDeletedProperty = Expression.Call(propertyMethodInfo, parameter, Expression.Constant("IsDeleted"));
 
+                    // IsDeleted == true görülmek istendiği zaman sorguda IgnoreQueryFilters eklenecek.
                     // e => e.IsDeleted == false
                     BinaryExpression compareExpression = Expression.MakeBinary(ExpressionType.Equal, isDeletedProperty, Expression.Constant(false));
                     var lambda = Expression.Lambda(compareExpression, parameter);

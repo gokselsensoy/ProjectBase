@@ -3,7 +3,7 @@ using Domain.SeedWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Infrastructure.Interceptors
+namespace Infrastructure.Persistance.Interceptors
 {
     public class AuditableEntityInterceptor : SaveChangesInterceptor
     {
