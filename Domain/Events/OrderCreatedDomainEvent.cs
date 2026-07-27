@@ -1,8 +1,8 @@
-﻿using MediatR;
+﻿using Domain.SeedWork;
 
 namespace Domain.Events
 {
-    public class OrderCreatedDomainEvent : INotification
+    public class OrderCreatedDomainEvent : IDomainEvent
     {
         public Guid OrderId { get; }
         public Guid CustomerId { get; }

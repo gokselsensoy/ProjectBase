@@ -2,7 +2,7 @@
 using Application.Features.Orders.Queries.GetOrdersByCustomer;
 using Application.Shared.Pagination;
 
-namespace Application.Abstractions.EntityRepositories
+namespace Application.Abstractions.QueryRepositories
 {
     public interface IOrderQueryRepository
     {

@@ -6,7 +6,7 @@ namespace Application.Shared.EventHandlers
     public abstract class BaseCacheInvalidationEventHandler
     {
         private readonly IDistributedCache _cache;
-        private readonly ILogger _logger;
+        protected readonly ILogger _logger;
 
         protected BaseCacheInvalidationEventHandler(
             IDistributedCache cache,

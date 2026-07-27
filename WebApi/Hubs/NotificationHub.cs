@@ -1,23 +1,27 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace WebApi.Hubs
 {
-    // [Authorize]
+    [Authorize]
     public class NotificationHub : Hub
     {
         public override async Task OnConnectedAsync()
         {
-            // Context.User.Identity.Name veya Context.User.FindFirst(ClaimTypes.NameIdentifier).Value
-            // gibi bir yöntemle kullanıcı ID'sini almalısın (Authentication kurulduktan sonra).
-            // var userId = Context.User.Identity.Name;
+            // ICurrentUserService.UserId ile aynı claim sırası: SignalRNotificationService.SendNotificationToUserAsync
+            // bu değeri grup adı olarak kullanıyor, ikisi eşleşmezse kullanıcıya özel bildirim asla ulaşmaz.
+            var userId = Context.User?.FindFirst("uid")?.Value
+                ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // if (!string.IsNullOrEmpty(userId))
-            // {
-            //     await Groups.AddToGroupAsync(Context.ConnectionId, userId);
-            // }
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+            }
 
-            // Şimdilik adminler için "admin-dashboard" grubu diyelim
-            if (Context.GetHttpContext().Request.Query["group"] == "admin")
+            // Adminler için "admin-dashboard" grubu
+            var httpContext = Context.GetHttpContext();
+            if (httpContext != null && httpContext.Request.Query["group"] == "admin")
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, "AdminDashboard");
             }

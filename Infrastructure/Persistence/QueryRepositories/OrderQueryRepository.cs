@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.EntityRepositories;
+﻿using Application.Abstractions.QueryRepositories;
 using Application.Features.Orders.DTOs;
 using Application.Features.Orders.Queries.GetOrdersByCustomer;
 using Application.Shared.Pagination;
