@@ -1,0 +1,63 @@
+{
+  "title": "ProjectBase API Overview",
+  "uid": "projectbase-api-overview",
+  "schemaVersion": 39,
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_ELASTICSEARCH",
+        "type": "datasource",
+        "query": "elasticsearch",
+        "label": "Elasticsearch"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Log volume by level",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "targets": [
+        {
+          "query": "*",
+          "metrics": [ { "type": "count", "id": "1" } ],
+          "bucketAggs": [
+            { "type": "date_histogram", "field": "@timestamp", "id": "2" },
+            { "type": "terms", "field": "log.level", "id": "3" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Error count (log.level: error)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "targets": [
+        {
+          "query": "log.level:error",
+          "metrics": [ { "type": "count", "id": "1" } ],
+          "bucketAggs": [ { "type": "date_histogram", "field": "@timestamp", "id": "2" } ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Recent errors (by CorrelationId)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "targets": [
+        {
+          "query": "log.level:error",
+          "metrics": [ { "type": "logs", "id": "1" } ]
+        }
+      ]
+    }
+  ]
+}

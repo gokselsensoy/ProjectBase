@@ -1,4 +1,6 @@
-﻿using Domain.Repositories;
+﻿using Application.Exceptions;
+using Domain.Entities;
+using Domain.Repositories;
 using Domain.SeedWork;
 using Domain.ValueObjects;
 using MediatR;
@@ -29,11 +31,11 @@ namespace Application.Features.Orders.Commands.UpdateAddress
 
             _logger.LogDebug("Handler başladı: {CommandName}, OrderId: {OrderId}", nameof(UpdateOrderAddressCommand), request.OrderId);
 
-            // 2. Domain varlığını bul
-            var order = await _orderRepository.GetByIdAsync(request.OrderId);
+            // 2. Domain varlığını bul (OrderItems'ı da yükleyen repository metodu ile)
+            var order = await _orderRepository.GetByIdWithItemsAsync(request.OrderId, cancellationToken);
             if (order == null)
             {
-                throw new Exception($"Sipariş bulunamadı: {request.OrderId}");
+                throw new NotFoundException(nameof(Order), request.OrderId);
             }
 
             // 3. Domain metodunu çağır (Bu metot OrderUpdatedDomainEvent'i fırlatacak)

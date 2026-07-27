@@ -1,4 +1,5 @@
-﻿using Domain.Events;
+﻿using Application.Shared.EventHandlers;
+using Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -6,18 +7,15 @@ using Microsoft.Extensions.Logging;
 namespace Application.Features.Orders.EventHandlers
 {
     public class OrderCacheInvalidationEventHandler :
+            BaseCacheInvalidationEventHandler,
             INotificationHandler<OrderCreatedDomainEvent>, // Yaratıldığında
             INotificationHandler<OrderUpdatedDomainEvent>  // Güncellendiğinde
     {
-        private readonly IDistributedCache _cache;
-        private readonly ILogger<OrderCacheInvalidationEventHandler> _logger;
-
         public OrderCacheInvalidationEventHandler(
             IDistributedCache cache,
             ILogger<OrderCacheInvalidationEventHandler> logger)
+            : base(cache, logger)
         {
-            _cache = cache;
-            _logger = logger;
         }
 
         // 1. YENİ BİR SİPARİŞ OLUŞTURULDUĞUNDA ÇALIŞIR
@@ -51,22 +49,6 @@ namespace Application.Features.Orders.EventHandlers
 
             // Müşteriye özel listeyi temizle
             await ClearCacheAsync($"orders:user:{notification.CustomerId}", cancellationToken);
-        }
-
-        // Cache temizleme işlemini merkezi hale getiren yardımcı metot
-        private async Task ClearCacheAsync(string cacheKey, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await _cache.RemoveAsync(cacheKey, cancellationToken);
-                _logger.LogDebug("Cache Başarıyla Temizlendi. Key: {CacheKey}", cacheKey);
-            }
-            catch (Exception ex)
-            {
-                // Cache sunucusuna (örn: Redis) erişilemezse bile ana işlem
-                // durmamalı. Sadece uyarı log'u atıp devam etmeliyiz.
-                _logger.LogWarning(ex, "Cache Temizleme Hatası (Key: {CacheKey}). İşlem devam edecek.", cacheKey);
-            }
         }
     }
 }

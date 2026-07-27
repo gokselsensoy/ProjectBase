@@ -1,14 +1,29 @@
-﻿using Application.DependencyInjection;
+using Application.Common;
+using Application.DependencyInjection;
 using Infrastructure.DependencyInjection;
 using Integration.DependencyInjection;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Serilog;
+using System.Globalization;
+using System.Net;
 using System.Reflection;
+using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Localization;
+using WebApi.Contracts;
+using WebApi.Filters;
 using WebApi.Hubs;
 using WebApi.Middleware;
+using WebApi.Resources;
 using WebApi.Services;
 using Application.Abstractions.Services;
+
+// Serilog'un kendi iç hatalarını (ör. Elasticsearch sink'i cluster'a bağlanamıyorsa) stderr'e yazdır.
+// Bunsuz, bir sink sessizce loglamayı bırakabilir ve fark etmek çok zor olur (bkz. Structure.md).
+Serilog.Debugging.SelfLog.Enable(msg => Console.Error.WriteLine($"[Serilog SelfLog] {msg}"));
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -47,9 +62,9 @@ try
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration) // appsettings.json'dan oku
         .ReadFrom.Services(services) // DI servislerini kullan (örn: IHttpContextAccessor)
-        .Enrich.FromLogContext() // Log Context'ten gelen bilgileri ekle
+        .Enrich.FromLogContext() // Log Context'ten gelen bilgileri ekle (CorrelationId dahil)
         .WriteTo.Console()); // Konsola yaz (appsettings'de de olabilir)
-                             // .WriteTo.File(...) // Dosyaya yaz (appsettings'de de olabilir)
+                             // .WriteTo.File(...) / .WriteTo.Elasticsearch(...) appsettings'de tanımlı
 
     // --- HANGFIRE KAYITLARI ---
     builder.Services.AddHangfire(config => config
@@ -78,6 +93,57 @@ try
     builder.Services.AddSignalR();
     builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
+    // --- LOCALIZATION (i18n) ---
+    // Handler/domain kodu asla dile özel string üretmemeli; sadece Application.Common.ErrorCodes
+    // döndürmeli. Gerçek çeviri burada, tek bir yerde, WebApi/Resources/SharedResource.*.resx
+    // üzerinden yapılır. Bkz. GlobalExceptionHandlingMiddleware.
+    builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+    var supportedCultures = new[] { new CultureInfo("tr"), new CultureInfo("en") };
+    builder.Services.Configure<RequestLocalizationOptions>(options =>
+    {
+        options.DefaultRequestCulture = new RequestCulture("tr");
+        options.SupportedCultures = supportedCultures;
+        options.SupportedUICultures = supportedCultures;
+        // Accept-Language header'ı otomatik olarak devreye girer (varsayılan provider'lardan biri).
+    });
+
+    // --- AUTHENTICATION / AUTHORIZATION ---
+    // appsettings'deki Auth:Authority / Auth:ApiName daha önce tanımlıydı ama hiç kullanılmıyordu.
+    // Artık gerçekten bir JWT Bearer şemasına bağlanıyor.
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority = builder.Configuration["Auth:Authority"];
+            options.Audience = builder.Configuration["Auth:ApiName"];
+            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+
+            options.Events = new JwtBearerEvents
+            {
+                // Varsayılan davranış boş gövdeli 401/403 döner; GlobalExceptionHandlingMiddleware
+                // ile aynı ErrorResponse şeklini burada da üretiyoruz ki client tek bir hata
+                // sözleşmesiyle uğraşsın.
+                OnChallenge = async context =>
+                {
+                    context.HandleResponse();
+                    await WriteAuthErrorResponseAsync(context.HttpContext, HttpStatusCode.Unauthorized, ErrorCodes.Unauthorized);
+                },
+                OnForbidden = async context =>
+                {
+                    await WriteAuthErrorResponseAsync(context.HttpContext, HttpStatusCode.Forbidden, ErrorCodes.Forbidden);
+                }
+            };
+        });
+
+    builder.Services.AddAuthorization(options =>
+    {
+        // Güvenli varsayılan: yeni bir controller/endpoint eklenip [Authorize] konması unutulursa
+        // sessizce herkese açık kalmasın. İstisnalar [AllowAnonymous] ile açıkça işaretlenmeli.
+        options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+    });
+
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
@@ -102,6 +168,7 @@ try
         // Gerekirse Domain için de eklenebilir.
     });
 
+    builder.Services.AddTransient<CorrelationIdMiddleware>();
     builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
     var app = builder.Build();
@@ -114,20 +181,22 @@ try
 
     app.UseHttpsRedirection();
     app.UseRouting();
+
+    // En dışta: her isteğin bir correlation id'si olsun ve tüm loglara/hata response'larına
+    // bu id eklensin (auth/hata dahil, o yüzden ikisinden de önce).
+    app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseCors("AllowSpecificOrigins");
     app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+    app.UseRequestLocalization();
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseSerilogRequestLogging();
     app.MapControllers();
     app.MapHub<NotificationHub>("/notification-hub");
-    // Hangfire Dashboard'u /hangfire adresinde aktif et
-    // TODO: Production'da buraya bir yetkilendirme filtresi eklenmelidir!
-    // Örn: app.MapHangfireDashboard("/hangfire", new DashboardOptions
-    // {
-    //    Authorization = new [] { new MyHangfireAuthorizationFilter() }
-    // });
-    app.MapHangfireDashboard("/hangfire");
+    app.MapHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAuthorizationFilter() }
+    });
 
     app.Run();
 }
@@ -140,3 +209,24 @@ finally
     Log.CloseAndFlush();
 }
 
+static async Task WriteAuthErrorResponseAsync(HttpContext httpContext, HttpStatusCode statusCode, string errorCode)
+{
+    var localizer = httpContext.RequestServices.GetRequiredService<IStringLocalizer<SharedResource>>();
+    var traceId = httpContext.Items.TryGetValue(CorrelationIdMiddleware.HttpContextItemKey, out var id)
+        ? id?.ToString() ?? httpContext.TraceIdentifier
+        : httpContext.TraceIdentifier;
+
+    var response = new ErrorResponse(
+        Success: false,
+        ErrorCode: errorCode,
+        Message: localizer[errorCode].Value,
+        TraceId: traceId,
+        StatusCode: (int)statusCode);
+
+    httpContext.Response.StatusCode = (int)statusCode;
+    httpContext.Response.ContentType = "application/json";
+    await httpContext.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    }));
+}

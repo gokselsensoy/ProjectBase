@@ -1,4 +1,4 @@
-﻿using Application.Abstractions.EntityRepositories;
+﻿using Application.Abstractions.QueryRepositories;
 using Application.Exceptions;
 using Application.Features.Orders.DTOs;
 using AutoMapper;
